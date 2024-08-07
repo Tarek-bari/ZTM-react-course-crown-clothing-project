@@ -42,7 +42,7 @@ provider.setCustomParameters({
 
 export const auth = getAuth()
 
-export const singInWithGooglePopup = () => signInWithPopup(auth, provider)
+export const signInWithGooglePopup = () => signInWithPopup(auth, provider)
 
 export const signInWithGoogleRedirect = () => signInWithRedirect(auth, provider)
 
@@ -64,17 +64,8 @@ export const addCollectionAndDocuments = async (collectionKey, objectsToAdd) => 
 }
 
 export const getCategoriesAndDocuments = async () => {
-    const collectionRef = collection(db, 'categories')
-    const q = query(collectionRef)
-
-    const querySnapshot = await getDocs(q)
-    const categoryMap = querySnapshot.docs.reduce((acc, docSnapshot) => {
-        const { title, items } = docSnapshot.data()
-        acc[title.toLowerCase()] = items
-        return acc
-    }, {})
-
-    return categoryMap
+    const querySnapshot = await getDocs(collection(db, 'categories'))
+    return querySnapshot.docs.map((docSnapshot) => docSnapshot.data())
 }
 
 
@@ -102,7 +93,7 @@ export const createUserDocumentFromAuth = async (userAuth, additionalInformation
         }
     }
 
-    return userDocRef
+    return userSnapshot
 
 }
 
@@ -120,3 +111,16 @@ export const signOutUser = async () => await signOut(auth)
 
 export const onAuthStateChangedListener = (callback, errorCallback, cpmpletedCallback) =>
     onAuthStateChanged(auth, callback, errorCallback, cpmpletedCallback)
+
+export const getCurrentUser = () => {
+    return new Promise((resolve, reject) => {
+        const unSubscribe = onAuthStateChanged(
+            auth,
+            (userAuth) => {
+                unSubscribe()
+                resolve(userAuth)
+            },
+            reject
+        )
+    })
+}
